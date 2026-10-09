@@ -1,0 +1,23 @@
+# ===== 后端 =====
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.db
+*.sqlite3
+.env
+
+# ===== 前端 =====
+node_modules/
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+
+# ===== IDE / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
