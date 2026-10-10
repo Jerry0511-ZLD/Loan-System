@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 圆角状态“胶囊”。底色是白的，实际使用时会在 Java 代码里把这个 drawable mutate 一份出来再改颜色，
+     这样多个列表项各用各的颜色，不会互相影响。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/white" />
+    <corners android:radius="20dp" />
+</shape>

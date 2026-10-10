@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 界面上所有给用户看的文字都集中放在这里。
+     好处：改文案不用翻代码，以后要做多语言也只需要再加一个 values-en 目录。 -->
+<resources>
+    <string name="app_name">个人贷款助手</string>
+
+    <!-- ========== 登录页 ========== -->
+    <string name="login_slogan">多数据源融合 · 智能风控</string>
+    <string name="label_phone">手机号</string>
+    <string name="label_password">密码</string>
+    <string name="hint_phone">请输入 11 位手机号</string>
+    <string name="hint_password">请输入登录密码</string>
+    <string name="action_login">登 录</string>
+    <string name="login_loading">登录中…</string>
+    <string name="login_demo_hint">演示账号：13800000001　密码：123456</string>
+    <string name="login_demo_tip">快速体验</string>
+    <string name="error_phone_length">请输入 11 位手机号</string>
+    <string name="error_password_empty">请输入密码</string>
+    <string name="login_success">登录成功</string>
+    <string name="login_failed">登录失败：%1$s</string>
+
+    <!-- ========== 主界面 / 底部导航 ========== -->
+    <string name="title_home">首页</string>
+    <string name="title_my_loans">我的贷款</string>
+    <string name="title_profile">我的</string>
+    <string name="nav_home">首页</string>
+    <string name="nav_loan">我的贷款</string>
+    <string name="nav_profile">我的</string>
+
+    <!-- ========== 首页（产品列表） ========== -->
+    <string name="home_greeting">你好，%1$s</string>
+    <string name="home_greeting_guest">用户</string>
+    <string name="error_empty_data">服务器没有返回数据</string>
+    <string name="error_missing_id">缺少申请编号</string>
+    <string name="home_subtitle">选一款适合你的产品，最快 5 分钟提交申请</string>
+    <string name="label_amount_range">额度范围</string>
+    <string name="label_rate">年化利率</string>
+    <string name="label_term">可选期限</string>
+    <string name="product_amount_value">%1$s ~ %2$s 元</string>
+    <string name="term_range_format">%1$d ~ %2$d 期</string>
+    <string name="action_apply_now">立即申请</string>
+    <string name="home_loading">正在加载产品…</string>
+    <string name="home_load_failed">产品加载失败：%1$s</string>
+    <string name="home_empty">暂时没有可申请的产品</string>
+
+    <!-- ========== 我的贷款（申请列表） ========== -->
+    <string name="loan_list_count">共 %1$d 笔申请</string>
+    <string name="loan_list_loading">正在加载申请记录…</string>
+    <string name="loan_list_empty">还没有申请记录\n去首页挑一款产品试试吧</string>
+    <string name="loan_list_amount_format">申请金额：¥%1$s</string>
+    <string name="loan_list_term_format">期限：%1$d 期</string>
+    <string name="loan_list_time_format">申请时间：%1$s</string>
+    <string name="loan_list_load_failed">加载失败：%1$s</string>
+
+    <!-- ========== 状态文案（和后端 PENDING / APPROVED / REJECTED 一一对应） ========== -->
+    <string name="status_pending">待审批</string>
+    <string name="status_approved">已通过</string>
+    <string name="status_rejected">已拒绝</string>
+    <string name="status_unknown">未知状态</string>
+
+    <!-- ========== 风险等级文案（后端返回 LOW / MEDIUM / HIGH） ========== -->
+    <string name="risk_level_low">低风险</string>
+    <string name="risk_level_medium">中风险</string>
+    <string name="risk_level_high">高风险</string>
+    <string name="risk_level_unknown">未知</string>
+
+    <!-- ========== 申请页 ========== -->
+    <string name="apply_title">申请借款</string>
+    <string name="apply_product_label">借款产品</string>
+    <string name="apply_amount_label">借款金额（元）</string>
+    <string name="apply_amount_hint">请输入借款金额</string>
+    <string name="apply_term_label">借款期限</string>
+    <string name="term_3">3 期</string>
+    <string name="term_6">6 期</string>
+    <string name="term_12">12 期</string>
+    <string name="term_24">24 期</string>
+    <string name="apply_purpose_label">资金用途</string>
+    <string name="apply_purpose_hint">例如：房屋装修 / 学费 / 进货周转</string>
+    <string name="apply_repay_label">还款方式</string>
+    <string name="repay_equal_installment">等额本息</string>
+    <string name="repay_interest_first">先息后本</string>
+    <string name="apply_agreement">我已阅读并同意《借款协议》</string>
+    <string name="action_submit">提交申请</string>
+    <string name="apply_submitting">提交中…</string>
+    <string name="apply_success_title">申请已提交</string>
+    <string name="apply_success_message">申请已提交，等待审批</string>
+    <string name="action_ok">确定</string>
+    <string name="action_cancel">取消</string>
+    <string name="error_amount_empty">请输入借款金额</string>
+    <string name="error_amount_invalid">借款金额必须大于 0</string>
+    <string name="error_purpose_empty">请填写资金用途</string>
+    <string name="error_agreement">请先勾选同意《借款协议》</string>
+    <string name="apply_failed">提交失败：%1$s</string>
+
+    <!-- ========== 申请详情 ========== -->
+    <string name="detail_title">申请详情</string>
+    <string name="detail_loading">正在加载申请详情…</string>
+    <string name="detail_load_failed">加载失败：%1$s</string>
+    <string name="detail_no">申请编号</string>
+    <string name="detail_status">当前状态</string>
+    <string name="detail_amount">借款金额</string>
+    <string name="detail_term">借款期限</string>
+    <string name="detail_purpose">资金用途</string>
+    <string name="detail_time">申请时间</string>
+    <string name="amount_unit">¥%1$s</string>
+    <string name="term_unit">%1$d 期</string>
+    <string name="detail_progress_title">申请进度</string>
+    <string name="step_submit">提交申请</string>
+    <string name="step_submit_desc">申请资料已成功提交</string>
+    <string name="step_risk">风控审核</string>
+    <string name="step_risk_desc">多数据源风控模型自动评估</string>
+    <string name="step_manual">人工审批</string>
+    <string name="step_manual_desc">风控人员复核，给出最终结论</string>
+    <string name="step_disburse">放款</string>
+    <string name="step_disburse_desc">审批通过后放款到绑定的银行卡</string>
+    <string name="detail_repay_title">还款计划</string>
+    <string name="detail_repay_placeholder">还款计划（每期应还本金、利息、还款日）将在第二阶段 Stage II 实现。\n本阶段只保留入口，接口与页面结构已经预留好。</string>
+    <string name="detail_risk_title">风控评分（接口预留）</string>
+    <string name="detail_risk_result">风险等级：%1$s　风险评分：%2$s</string>
+    <string name="detail_risk_none">暂无评分，等待风控服务返回</string>
+    <string name="detail_risk_placeholder">说明：风控模型不在第一阶段实现。页面上的评分与风险等级来自「风控服务接口」——本阶段只定义接口（RiskService#getRiskResult(applicationId)），第二阶段接入真实的模型与数据源。可见前端已经为它留好了展示位置。</string>
+
+    <!-- ========== 我的 ========== -->
+    <string name="profile_default_name">未登录用户</string>
+    <string name="profile_row_credit">我的额度</string>
+    <string name="profile_row_credit_value">去查看</string>
+    <string name="profile_row_repay">还款计划</string>
+    <string name="profile_row_repay_value">敬请期待</string>
+    <string name="profile_row_help">帮助中心</string>
+    <string name="profile_row_help_value">常见问题</string>
+    <string name="profile_credit_toast">额度信息由风控服务评估，将在第二阶段开放</string>
+    <string name="profile_repay_toast">还款计划功能将在第二阶段（Stage II）开放</string>
+    <string name="profile_help_toast">帮助中心正在建设中</string>
+    <string name="action_logout">退出登录</string>
+    <string name="logout_confirm_title">确认退出登录？</string>
+    <string name="logout_confirm_message">退出后需要重新输入账号密码才能使用</string>
+
+    <!-- ========== 无障碍描述 ========== -->
+    <string name="cd_app_logo">应用图标</string>
+    <string name="cd_avatar">用户头像</string>
+</resources>

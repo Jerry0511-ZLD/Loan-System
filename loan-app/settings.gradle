@@ -1,0 +1,19 @@
+// Gradle 的设置文件：告诉 Gradle 去哪里下载插件和依赖，以及这个工程包含哪些模块。
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "LoanApp"
+include ':app'

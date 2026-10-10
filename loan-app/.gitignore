@@ -1,0 +1,16 @@
+# 编译产物（几个 G，绝对不要提交）
+build/
+.gradle/
+.kotlin/
+captures/
+
+# 本机专属配置：每台电脑的 Android SDK 路径不同，不能提交
+local.properties
+
+# 编辑器文件
+.idea/
+*.iml
+.DS_Store
+
+# 日志
+*.log

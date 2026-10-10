@@ -1,0 +1,14 @@
+# 依赖包（几百 MB，绝对不要提交到 Git）
+node_modules/
+
+# 打包产物
+dist/
+
+# 编辑器 / 系统文件
+.vscode/
+.idea/
+.DS_Store
+
+# 日志
+*.log
+npm-debug.log*

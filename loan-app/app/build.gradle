@@ -1,0 +1,57 @@
+// app 模块的构建脚本：配置编译版本、依赖库等。
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    // 代码所在的包名（R 类也在这个包下）
+    namespace 'com.uestc.loanapp'
+    compileSdk 34
+
+    defaultConfig {
+        // 安装到手机上时用的唯一标识，和 namespace 保持一致
+        applicationId "com.uestc.loanapp"
+        // 最低支持的 Android 版本（7.0）
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+        // 仪器化测试（androidTest 目录）的运行器
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            // 本阶段不开启代码混淆，方便看崩溃日志
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    // 使用 Java 17 编译，和课程要求保持一致
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // Kotlin 编译成 Java 17 字节码，和上面的 compileOptions 保持一致
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    // 网络请求用 OkHttp，JSON 解析用 Gson（课程教的就是这两个）
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+}

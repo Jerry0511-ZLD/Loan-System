@@ -1,0 +1,26 @@
+/* 全局样式，所有页面都会生效 */
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f0f2f5;
+  color: #303133;
+}
+
+/* 页面里通用的“白底卡片 + 圆角 + 阴影”观感 */
+.page-card {
+  border-radius: 8px;
+}
+
+/* 列表页顶部的筛选条 */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}

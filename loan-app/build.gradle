@@ -1,0 +1,7 @@
+// 工程根目录的构建脚本。
+// 这里只声明“用哪个版本的插件”，apply false 表示先下载但不在这里使用，
+// 真正使用它们的是 app/build.gradle。
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.24' apply false
+}
