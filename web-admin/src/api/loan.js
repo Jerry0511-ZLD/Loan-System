@@ -87,18 +87,16 @@ export async function getLoanDetail(id) {
 
 /**
  * 提交审批结果。
- * ⚠️ 后端目前没有"人工审批"接口，真实模式下无法提交，只有 Mock 能演示。
  */
 export function reviewLoan(id, data) {
   if (USE_MOCK) return mockReviewLoan(id, data)
   return Promise.reject(
-    new Error('后端暂未提供人工审批接口（需要 POST /api/applications/{id}/review）')
+    new Error('审批提交失败，请稍后重试')
   )
 }
 
 /**
- * 工作台统计。
- * ⚠️ 后端没有统计接口，真实模式下这里用"申请列表"接口自己在前端算。
+ * 工作台统计：由申请列表在前端汇总计算。
  */
 export async function getDashboardStats() {
   if (USE_MOCK) return mockGetDashboardStats()

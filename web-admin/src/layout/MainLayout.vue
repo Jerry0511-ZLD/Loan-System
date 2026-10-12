@@ -12,15 +12,15 @@
       </div>
 
       <!--
-        router 属性：点击菜单项时自动跳转到 index 对应的网址
-        default-active：当前高亮哪一项
+        点击菜单项由 handleSelect 统一处理：已开放的模块跳转，
+        未开放的模块只给出提示；default-active 控制当前高亮哪一项
       -->
       <el-menu
         :default-active="activePath"
-        router
         background-color="#1f2d3d"
         text-color="#bfcbd9"
         active-text-color="#ffffff"
+        @select="handleSelect"
       >
         <el-menu-item index="/dashboard">
           <el-icon><DataBoard /></el-icon>
@@ -30,13 +30,13 @@
           <el-icon><Document /></el-icon>
           <span>贷款申请</span>
         </el-menu-item>
-        <el-menu-item index="/repayment" disabled>
+        <el-menu-item index="/repayment">
           <el-icon><Money /></el-icon>
-          <span>还款管理（综设II）</span>
+          <span>还款管理</span>
         </el-menu-item>
-        <el-menu-item index="/datasource" disabled>
+        <el-menu-item index="/datasource">
           <el-icon><Connection /></el-icon>
-          <span>数据源管理（综设II）</span>
+          <span>数据源管理</span>
         </el-menu-item>
       </el-menu>
     </el-aside>
@@ -71,7 +71,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,6 +84,15 @@ const activePath = computed(() => {
   if (route.path.startsWith('/loans')) return '/loans'
   return route.path
 })
+
+// 还没开放的模块：点击只给出提示，不做跳转
+function handleSelect(index) {
+  if (index === '/repayment' || index === '/datasource') {
+    ElMessage.info('该功能还未开发，敬请期待')
+    return
+  }
+  router.push(index)
+}
 
 async function handleCommand(command) {
   if (command !== 'logout') return

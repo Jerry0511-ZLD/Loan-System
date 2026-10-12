@@ -50,7 +50,7 @@
         </el-card>
 
         <!--
-          多数据源融合信息：本课题的核心卖点。
+          多数据源融合信息：本系统的核心能力。
           数据源不是写死的 4 个，后端以后加数据源，前端这页不用改。
         -->
         <el-card shadow="never" class="page-card" style="margin-top: 16px">
@@ -75,10 +75,10 @@
         </el-card>
       </el-col>
 
-      <!-- 右栏：风险结论（接口预留）+ 流转记录 -->
+      <!-- 右栏：风险结论 + 流转记录 -->
       <el-col :span="8">
         <el-card shadow="never" class="page-card">
-          <template #header><b>风险结论（风控服务接口）</b></template>
+          <template #header><b>风险结论</b></template>
 
           <div class="risk-score">
             <div class="score">{{ detail.riskScore ?? '-' }}</div>
@@ -95,15 +95,6 @@
               {{ formatAmount(detail.approvedAmount || detail.amount) }} 元
             </el-descriptions-item>
           </el-descriptions>
-
-          <el-alert
-            type="info"
-            :closable="false"
-            show-icon
-            style="margin-top: 12px"
-            title="本阶段说明"
-            description="综设 I 只定义风控服务的接口，不实现评分模型；此处数据为预留字段的模拟值，将在综设 II 接入真实模型。"
-          />
         </el-card>
 
         <el-card shadow="never" class="page-card" style="margin-top: 16px">

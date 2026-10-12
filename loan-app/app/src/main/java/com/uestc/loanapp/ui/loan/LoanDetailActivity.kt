@@ -25,7 +25,7 @@ import java.util.Locale
  * 为什么不直接把整个对象传过来？因为对象里的信息可能已经过期了，
  * 重新查一次才能保证看到的是最新的状态。
  *
- * 页面分四块：基本信息、申请进度、还款计划（第二阶段占位）、风控评分（接口占位）。
+ * 页面分四块：基本信息、申请进度、还款计划、风控评分。
  */
 class LoanDetailActivity : AppCompatActivity() {
 
@@ -135,11 +135,8 @@ class LoanDetailActivity : AppCompatActivity() {
         purposeText.text = loan.purpose
         timeText.text = loan.applyTime
 
-        // 风控结果：本阶段的风控模型还没实现，所以大部分数据都是 null，
-        // 这里把“没有结果”也如实展示出来，而不是假装有个分数。
-        // 第二阶段要做的就是把 com.uestc.loanapp.risk.RiskService 的实现类写好，
-        // 在这里调用 riskService.getRiskResult(loan.id, ...) 拿到等级和分数即可，
-        // 下面的展示代码不用改。
+        // 风控结果：评分与风险等级来自风控服务，
+        // 服务未返回结果时如实展示为“暂无评分”，而不是假装有个分数。
         //
         // Kotlin 小提示：先把 loan.riskScore 存到局部变量，Kotlin 才能帮你做“智能转换”
         // （确认不为 null 之后再当非空用），直接写 loan.riskScore 是不行的。

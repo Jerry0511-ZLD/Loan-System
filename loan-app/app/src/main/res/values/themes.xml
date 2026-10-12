@@ -4,7 +4,7 @@
     <!-- 全局主题。
          Material3 是 Google 现在主推的一套设计风格；
          NoActionBar 表示不要系统自带的标题栏，标题栏由我们自己写在每个布局里的 MaterialToolbar 负责；
-         DayNight 表示跟随系统自动切换浅色/深色（本阶段只调了浅色下的主色）。 -->
+         DayNight 表示跟随系统自动切换浅色/深色。 -->
     <style name="Theme.LoanApp" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/white</item>

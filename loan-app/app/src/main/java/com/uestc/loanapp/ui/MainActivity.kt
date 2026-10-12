@@ -19,7 +19,7 @@ import com.uestc.loanapp.ui.profile.ProfileFragment
  *
  * 这里的 replace 每次都会重新创建 Fragment，好处是逻辑简单、数据总是最新的
  * （回到“我的贷款”就会重新拉一次列表）。坏处是切换时会丢失页面内的滚动位置，
- * 对这个规模的课程项目来说完全可以接受。
+ * 对本项目来说完全可以接受。
  */
 class MainActivity : AppCompatActivity() {
 

@@ -97,7 +97,7 @@
             android:layout_marginTop="16dp"
             android:visibility="gone" />
 
-        <!-- 快速体验提示：把演示账号直接写在界面上，答辩演示时不用去翻文档 -->
+        <!-- 快速体验提示：把体验账号直接写在界面上，方便快速登录 -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

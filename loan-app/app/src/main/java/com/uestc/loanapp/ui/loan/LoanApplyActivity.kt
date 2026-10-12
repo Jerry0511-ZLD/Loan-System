@@ -115,8 +115,8 @@ class LoanApplyActivity : AppCompatActivity() {
             term = selectedTerm(),
             purpose = purpose
         )
-        // 说明：还款方式（等额本息/先息后本）本阶段只作为表单信息，
-        // 因为它真正发挥作用是在第二阶段的“还款计划”里，那时会随申请单一起保存。
+        // 说明：还款方式（等额本息/先息后本）此处作为表单信息，
+        // 将在生成还款计划时随申请单一起使用。
         // status（状态）由后端决定，客户端不设置，提交成功后后端会返回 PENDING。
 
         setLoading(true)

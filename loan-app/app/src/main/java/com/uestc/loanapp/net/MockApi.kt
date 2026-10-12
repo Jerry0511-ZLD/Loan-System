@@ -18,8 +18,7 @@ import java.util.Locale
  * 所以它里面那几个 List 天然就是“全局的内存数据库”。
  *
  * 当 [com.uestc.loanapp.AppConfig.USE_MOCK] 为 true 时，
- * ApiService 会把所有请求转到这里，于是没有后端也能把整个流程点一遍，
- * 用来演示、写文档、给老师看效果都很方便。
+ * ApiService 会把所有请求转到这里，于是没有后端也能把整个流程走完。
  *
  * 每个回调都故意延迟 400 毫秒再返回，是为了让“加载中”的转圈动画能被看见。
  * 如果立刻返回，你根本来不及看到加载状态，也就发现不了界面上的问题。
@@ -27,10 +26,10 @@ import java.util.Locale
  */
 object MockApi {
 
-    /** 演示账号：手机号（和后端 seed.py 里的 demo 账号保持一致） */
+    /** 体验账号：手机号（和后端 seed.py 里的账号保持一致） */
     const val DEMO_PHONE: String = "13800000001"
 
-    /** 演示账号：密码 */
+    /** 体验账号：密码 */
     const val DEMO_PASSWORD: String = "123456"
 
     /** 模拟网络耗时（毫秒） */
@@ -70,7 +69,7 @@ object MockApi {
                     )
                 )
             } else {
-                callback.onFailure("手机号或密码错误，请使用演示账号登录")
+                callback.onFailure("手机号或密码错误，请重新输入")
             }
         }
     }
@@ -107,7 +106,7 @@ object MockApi {
         postDelayed {
             nextLoanId += 1
             application.id = "L2025" + String.format(Locale.CHINA, "%04d", nextLoanId)
-            // 新提交的申请一定是“待审批”，风控结果要等风控服务给出（第二阶段）
+            // 新提交的申请默认为“待审批”，风控结果由风控服务给出
             application.status = StatusUtil.PENDING
             application.applyTime = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.CHINA).format(Date())
             application.riskLevel = null

@@ -1,10 +1,10 @@
 /**
  * 本地模拟数据（Mock）。
  *
- * 为什么要它：前端不能等后端。有了 mock，前端第一天就能把页面跑起来、能演示、
- * 能自己测交互，等到后端接口好了，只需要把 config.js 里的 USE_MOCK 改成 false。
+ * 用途：在后端接口就绪前，前端也能把页面与交互完整跑起来；
+ * 后端就绪后，把 config.js 里的 USE_MOCK 改成 false 即可切换到真实接口。
  *
- * 这里的字段名 = 前后端约定的接口字段名，写《详细设计说明书》时可以直接抄。
+ * 这里的字段名 = 前后端约定的接口字段名，保持一致。
  */
 
 // 模拟网络延迟，让 loading 效果能看出来
@@ -12,8 +12,7 @@ const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * 贷款申请数据。
- * 说明：riskScore / riskLevel 是“风控服务”接口预留的字段，
- * 本阶段（综设 I）不实现风控模型，先用假数据占位。
+ * riskScore / riskLevel 为风控结果字段，此处为示例数据。
  */
 const loans = [
   {
@@ -176,9 +175,8 @@ function now() {
 }
 
 /**
- * 多数据源融合信息（这是本课题的“灵魂”）。
- * 真实系统里这些数据来自征信机构、运营商、电商平台、社保等外部数据源，
- * 本阶段用假数据演示界面，接口结构保持一致。
+ * 多数据源融合信息。这些数据来自征信机构、运营商、电商平台、社保等外部数据源，
+ * 此处为示例数据，接口结构保持一致。
  */
 function buildDataSources(loan) {
   const s = seedFrom(loan.id)
@@ -230,7 +228,7 @@ function buildDataSources(loan) {
   ]
 }
 
-/** 审批流转记录（对应《详细设计说明书》里的“状态转换图”） */
+/** 审批流转记录 */
 function buildHistory(loan) {
   const history = [
     { time: loan.applyTime, operator: '借款人', action: '提交贷款申请', remark: `申请渠道：${loan.channel}` },

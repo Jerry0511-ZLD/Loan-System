@@ -23,13 +23,13 @@ android {
 
     buildTypes {
         release {
-            // 本阶段不开启代码混淆，方便看崩溃日志
+            // 不开启代码混淆，方便查看崩溃日志
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
-    // 使用 Java 17 编译，和课程要求保持一致
+    // 使用 Java 17 编译
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
@@ -47,7 +47,7 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    // 网络请求用 OkHttp，JSON 解析用 Gson（课程教的就是这两个）
+    // 网络请求用 OkHttp，JSON 解析用 Gson
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.code.gson:gson:2.11.0'
 

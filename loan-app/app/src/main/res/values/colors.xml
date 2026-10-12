@@ -22,7 +22,7 @@
     <!-- 进度步骤：未完成的步骤用灰色 -->
     <color name="step_inactive">#FFBDBDBD</color>
 
-    <!-- 第二阶段占位区块的配色 -->
-    <color name="placeholder_bg">#FFFFF8E1</color>
-    <color name="placeholder_stroke">#FFFFB300</color>
+    <!-- 内容区块的配色 -->
+    <color name="section_bg">#FFFFFFFF</color>
+    <color name="section_stroke">#FFE0E0E0</color>
 </resources>

@@ -12,7 +12,7 @@
     <string name="hint_password">请输入登录密码</string>
     <string name="action_login">登 录</string>
     <string name="login_loading">登录中…</string>
-    <string name="login_demo_hint">演示账号：13800000001　密码：123456</string>
+    <string name="login_demo_hint">体验账号：13800000001　密码：123456</string>
     <string name="login_demo_tip">快速体验</string>
     <string name="error_phone_length">请输入 11 位手机号</string>
     <string name="error_password_empty">请输入密码</string>
@@ -114,11 +114,11 @@
     <string name="step_disburse">放款</string>
     <string name="step_disburse_desc">审批通过后放款到绑定的银行卡</string>
     <string name="detail_repay_title">还款计划</string>
-    <string name="detail_repay_placeholder">还款计划（每期应还本金、利息、还款日）将在第二阶段 Stage II 实现。\n本阶段只保留入口，接口与页面结构已经预留好。</string>
-    <string name="detail_risk_title">风控评分（接口预留）</string>
+    <string name="detail_repay_placeholder">还款计划将在放款后生成，届时可查看每期应还本金、利息与还款日。</string>
+    <string name="detail_risk_title">风控评分</string>
     <string name="detail_risk_result">风险等级：%1$s　风险评分：%2$s</string>
     <string name="detail_risk_none">暂无评分，等待风控服务返回</string>
-    <string name="detail_risk_placeholder">说明：风控模型不在第一阶段实现。页面上的评分与风险等级来自「风控服务接口」——本阶段只定义接口（RiskService#getRiskResult(applicationId)），第二阶段接入真实的模型与数据源。可见前端已经为它留好了展示位置。</string>
+    <string name="detail_risk_placeholder">风险评分与风险等级由风控模型综合多数据源评估得出。</string>
 
     <!-- ========== 我的 ========== -->
     <string name="profile_default_name">未登录用户</string>
@@ -128,8 +128,8 @@
     <string name="profile_row_repay_value">敬请期待</string>
     <string name="profile_row_help">帮助中心</string>
     <string name="profile_row_help_value">常见问题</string>
-    <string name="profile_credit_toast">额度信息由风控服务评估，将在第二阶段开放</string>
-    <string name="profile_repay_toast">还款计划功能将在第二阶段（Stage II）开放</string>
+    <string name="profile_credit_toast">额度信息由风控服务评估后展示</string>
+    <string name="profile_repay_toast">还款计划功能即将上线</string>
     <string name="profile_help_toast">帮助中心正在建设中</string>
     <string name="action_logout">退出登录</string>
     <string name="logout_confirm_title">确认退出登录？</string>

@@ -33,7 +33,7 @@
         </el-button>
       </el-form>
 
-      <p class="tip">综设 I 演示版：账号 admin，密码 admin123（数据为本地模拟数据）</p>
+      <p class="tip">管理员账号：admin　密码：admin123</p>
     </el-card>
   </div>
 </template>

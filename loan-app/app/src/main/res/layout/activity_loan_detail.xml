@@ -366,12 +366,12 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- ===== 第三部分：还款计划（第二阶段才实现，这里只是占位） ===== -->
+                <!-- ===== 第三部分：还款计划 ===== -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_placeholder"
+                    android:background="@drawable/bg_section"
                     android:orientation="vertical"
                     android:padding="16dp">
 
@@ -393,12 +393,12 @@
                         android:textSize="13sp" />
                 </LinearLayout>
 
-                <!-- ===== 第四部分：风控评分占位（接口在第一阶段只做定义） ===== -->
+                <!-- ===== 第四部分：风控评分 ===== -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_placeholder"
+                    android:background="@drawable/bg_section"
                     android:orientation="vertical"
                     android:padding="16dp">
 
