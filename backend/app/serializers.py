@@ -23,14 +23,27 @@ def mask_id_card(id_card: str) -> str:
     return id_card[:4] + "*" * (len(id_card) - 8) + id_card[-4:]
 
 
+def mask_phone(phone: str) -> str:
+    """手机号脱敏：138****0001 这种。
+
+    为什么手机号也要脱敏：它和身份证一样属于《个人信息保护法》下的敏感个人信息，
+    需求规格说明书 NFR-S4 明确要求「身份证号、手机号在接口返回时均脱敏」。
+    脱敏必须放在服务端出口做，不能依赖前端「不显示」——
+    前端拿到的响应体才是真正可控的信息边界。
+    """
+    if not phone or len(phone) < 7:
+        return phone or ""
+    return phone[:3] + "*" * (len(phone) - 7) + phone[-4:]
+
+
 def user_to_dict(user: User) -> dict:
     return {
         "id": user.id,
         "username": user.username,
         "name": user.name,
         "role": user.role,  # user | admin，前端据此决定是否显示管理端入口
-        "phone": user.phone,
-        "idCard": mask_id_card(user.id_card),
+        "phone": mask_phone(user.phone),      # 脱敏后返回
+        "idCard": mask_id_card(user.id_card),  # 脱敏后返回
         "monthlyIncome": user.monthly_income,
         "createdAt": fmt_time(user.created_at),
     }
@@ -53,6 +66,13 @@ def product_to_dict(product: Product) -> dict:
 
 
 def decision_to_dict(decision: Decision) -> dict:
+    """决策明细。管理端「风控明细」页直接消费这个结构。
+
+    相比旧版多返回三项，都是为了让决策「可解释、可追溯」：
+    - engine / modelVersion：这条结论是哪套识别机制、哪个版本算出来的；
+    - source：自动决策（auto）还是人工复核（manual）；
+    - reviewerId / reviewedAt / comment：人工复核的留痕。
+    """
     return {
         "id": decision.id,
         "status": decision.status.value.upper(),  # APPROVED / REJECTED / MANUAL
@@ -61,6 +81,12 @@ def decision_to_dict(decision: Decision) -> dict:
         "rateText": f"{decision.rate * 100:.2f}%",
         "reasons": decision.reasons or [],
         "featureProfile": decision.feature_profile or {},
+        "engine": decision.engine,                 # 引擎标识，如 rule_v0
+        "modelVersion": decision.model_version,    # 引擎版本
+        "source": decision.source,                 # auto | manual
+        "reviewerId": decision.reviewer_id,
+        "reviewedAt": fmt_time(decision.reviewed_at),
+        "comment": decision.comment,
         "createdAt": fmt_time(decision.created_at),
     }
 
@@ -80,7 +106,7 @@ def loan_to_dict(
         "id": application.id,
         "userId": application.user_id,
         "applicantName": application.applicant_name,
-        "phone": application.phone,
+        "phone": mask_phone(application.phone),   # 管理端同样脱敏，合规要求不分端
         "idCard": mask_id_card(application.id_card),
         "monthlyIncome": application.monthly_income,
         "productId": application.product_id,

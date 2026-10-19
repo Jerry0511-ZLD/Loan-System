@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     debug: bool = True  # True 时打印 SQL，方便排查
     database_url: str = "sqlite+aiosqlite:///./risk.db"
     datasource_mode: str = "mock"  # mock | live
+    # 风控引擎：对应 services/risk_engines 里注册的名字。
+    # 阶段 I 只有 rule_v0（规则占位）；阶段 II 实现 scorecard 后，改这一行就能切换机制，
+    # 决策链路代码不用动，历史决策也能靠 decisions.engine 字段区分是哪套机制算的。
+    risk_engine: str = "rule_v0"
 
     # ---- 统一响应外壳 {code, message, data} ----
     # 业务成功时 code 返回几。前端拦截器按这个值判断成功，两边对齐即可。

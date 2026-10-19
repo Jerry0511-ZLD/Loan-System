@@ -33,6 +33,7 @@ python run.py          # 起在 8080 端口，改代码自动重载
 | 金额单位 | 元，数字类型（不要传 "5万" 这种） |
 | 利率单位 | 小数，`0.048` = 年化 4.8%；另有 `rateText: "4.8%"` 可直接展示 |
 | 身份证 | 返回时已脱敏：`5101**********0021` |
+| 手机号 | 返回时已脱敏：`138****0001`（脱敏在服务端完成，前端拿到就是脱敏后的值） |
 
 **前端 axios 拦截器按这个写就能对上**：
 
@@ -80,7 +81,9 @@ axios.interceptors.response.use(
 | GET | `/api/loans/{id}` | 需要 | 我的贷款详情 |
 | GET | `/api/applications` | 管理员 | 申请单列表（管理端，分页 + 筛选） |
 | GET | `/api/applications/{id}` | 管理员 | 申请单详情 |
-| GET | `/api/applications/{id}/decision` | 管理员 | 风控决策明细（含特征画像） |
+| GET | `/api/applications/{id}/decision` | 管理员 | 风控决策明细（含特征画像、引擎版本） |
+| GET | `/api/applications/{id}/datasources` | 管理员 | **多数据源原始数据明细**（三源各自返回了什么） |
+| POST | `/api/applications/{id}/review` | 管理员 | **人工复核**（处理「转人工」的申请单） |
 | POST | `/api/applications` | 管理员 | 直录一笔进件（联调用） |
 | GET | `/health` | 不需要 | 健康检查（这个接口**不套**响应外壳） |
 
@@ -241,15 +244,85 @@ Query：`page`、`page_size`（或 `pageSize`）、`status`（可选，`APPROVED
 
 需要 admin 的 token，否则 `403`。
 
-Query：`page`、`page_size`/`pageSize`、`status`（`APPROVED`/`PENDING`/`REJECTED`）、`keyword`（按姓名或手机号模糊搜）。
+Query：
 
-响应结构和 4.5 一样（分页 + `list` 数组），每行比用户端多的是申请人信息（`applicantName`、`phone`、`idCard` 脱敏、`monthlyIncome`）。
+| 参数 | 说明 |
+| --- | --- |
+| `page` / `page_size`（或 `pageSize`） | 分页，默认第 1 页、每页 10 条 |
+| `status` | `APPROVED` / `PENDING` / `REJECTED` |
+| `keyword` | 按姓名或手机号模糊搜索 |
+| `reviewRequired` | `true` 只看转人工待办；`false` 只看不需要人工的；不传则全部 |
+| `startDate` / `endDate` | 按申请创建时间筛选，格式 `2026-10-01`；`endDate` 含当天 23:59:59 |
 
-### 4.8 管理端详情 / 决策明细 / 直录进件
+响应结构和 4.5 一样（分页 + `list` 数组），每行比用户端多的是申请人信息（`applicantName`、`phone` 脱敏、`idCard` 脱敏、`monthlyIncome`）。
 
-- `GET /api/applications/{id}` → 单条申请的完整信息
-- `GET /api/applications/{id}/decision` → 规则命中的原因和特征画像（`reasons`、`featureProfile`）
-- `POST /api/applications` → 管理员直接录一笔进件（联调用，字段：`applicantName`、`idCard`、`phone`、`monthlyIncome`、`requestedAmount`、`term`、`productId`）
+### 4.8 管理端详情 / 决策明细 / 多数据源明细
+
+**`GET /api/applications/{id}`** → 单条申请的完整信息，结构同 4.4 的 `data`。
+
+**`GET /api/applications/{id}/decision`** → 决策明细。相比旧版，`data` 里多了四个字段：
+
+```json
+{
+  "status": "MANUAL",
+  "approvedAmount": 0.0,
+  "rate": 0.0,
+  "reasons": ["multi_platform: 多头授信5家,转人工"],
+  "featureProfile": { "overdue_count_6m": 1, "dti": 0.32, "...": "..." },
+  "engine": "rule_v0",          // 这条结论是哪套机制算的（阶段 II 会是 scorecard）
+  "modelVersion": "1.0",        // 引擎版本，便于新旧效果对比
+  "source": "auto",             // auto = 系统自动决策；manual = 人工复核追加
+  "reviewerId": "",             // 人工复核人（source=manual 时才有值）
+  "reviewedAt": null,
+  "comment": "",
+  "createdAt": "2026-10-19 20:11:03"
+}
+```
+
+**`GET /api/applications/{id}/datasources`** → 三源原始数据快照，用于管理端展示「融合前长什么样」：
+
+```json
+{
+  "applicationId": "2094855fbe974c318c7bb7099a8d1b6f",
+  "sources": [
+    { "name": "credit_bureau", "fields": { "overdue_count_6m": 1, "current_debt": 12000, "credit_card_count": 5, "is_blacklisted": false } },
+    { "name": "carrier",       "fields": { "active_months": 18, "real_named": true, "last_active_days": 2 } },
+    { "name": "housing_fund",  "fields": { "fund_months": 24, "monthly_contribution": 800, "active": true } }
+  ],
+  "featureProfile": { "...": "聚合后的统一特征" },
+  "engine": "rule_v0",
+  "modelVersion": "1.0",
+  "decidedAt": "2026-10-19 20:11:03"
+}
+```
+
+> 数据来自 `decisions.raw_data`（决策时落库的快照），不是实时重算 —— 审计要看的是「当时」的数据。
+
+### 4.9 人工复核 `POST /api/applications/{id}/review`
+
+处理那些 `reviewRequired = true` 的申请单（即风控结论为「转人工」的单子）。
+
+请求：
+
+```json
+{ "action": "approve", "approvedAmount": 48000, "rate": 0.048, "comment": "公积金正常，同意放款" }
+```
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| `action` | 是 | `approve`（通过）/ `reject`（拒绝）；也接受 `pass`、`agree`、`通过`、`拒绝` 等写法，服务端会归一化 |
+| `approvedAmount` | 否 | 手工调整批核额度；不传则沿用系统算出的值，系统值为 0 时按授信规则兜底 |
+| `rate` | 否 | 手工调整年化利率（小数，`0.048` = 4.8%）；不传则沿用产品或系统值 |
+| `comment` | 否 | 复核意见，写进决策记录，供事后追责 |
+
+响应：`data` 是复核后的申请单（结构同 4.4）。
+
+两条规则：
+
+- 只有 `reviewRequired = true` 的单子能复核，否则返回 **`409`**（不静默覆盖已生效的结论）；
+- 复核结果会**追加一条新的决策记录**（`source="manual"`），原来那条自动决策保留，审计时能看出「系统判了什么、人改成了什么」。
+
+**`POST /api/applications`** → 管理员直接录一笔进件（联调用，字段：`applicantName`、`idCard`、`phone`、`monthlyIncome`、`requestedAmount`、`term`、`productId`）。
 
 ---
 
@@ -259,7 +332,9 @@ Query：`page`、`page_size`/`pageSize`、`status`（`APPROVED`/`PENDING`/`REJEC
 | --- | --- | --- |
 | `status` | `PENDING` / `APPROVED` / `REJECTED` | 申请单状态（前端只看这个） |
 | `decisionStatus` | `APPROVED` / `REJECTED` / `MANUAL` | 风控内部结论，`MANUAL` = 转人工 |
-| `reviewRequired` | `true` / `false` | 是否转人工复核（= `decisionStatus === "MANUAL"`） |
+| `reviewRequired` | `true` / `false` | 是否等待人工复核（= `decisionStatus === "MANUAL"`） |
+| `source` | `auto` / `manual` | 决策记录来源：系统自动 / 人工复核追加 |
+| `engine` | `rule_v0` / `scorecard` / `manual` | 决策引擎标识，阶段 I 只有 `rule_v0` |
 | `riskLevel` | `LOW` / `MEDIUM` / `HIGH` | 风险档位（低/中/高） |
 | `riskScore` | 0 ~ 100 的数字 | 风险分，**越高越危险**；≥70 高风险，40~69 中风险，<40 低风险 |
 | 用户 `role` | `user` / `admin` | 权限 |
@@ -277,6 +352,7 @@ Query：`page`、`page_size`/`pageSize`、`status`（`APPROVED`/`PENDING`/`REJEC
 | 401 | 未登录 / token 失效 / 账号密码错误 | 没带 `Authorization` 头 |
 | 403 | 权限不够 | 普通用户访问管理端 |
 | 404 | 资源不存在 | 产品下架、申请单不存在 |
+| 409 | 状态冲突 | 对已经处理过的申请单重复复核、对非转人工的单子发起复核 |
 | 422 | 请求体字段缺失或类型不对 | 提交申请时漏了 `product` |
 | 500 | 服务端异常 | 统一返回「服务器内部错误」，堆栈在后端控制台 |
 

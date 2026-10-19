@@ -11,13 +11,15 @@ Loan-System/
     │   ├── api/                 # 路由：认证 / 产品 / 贷款 / 申请管理（管理端）
     │   ├── core/                # 统一响应外壳、密码与 token
     │   ├── datasources/         # 多数据源适配层（征信 / 运营商 / 公积金，MVP 为 Mock）
-    │   ├── services/            # 特征聚合 → 规则引擎 → 授信计算 → 风险评级
+    │   ├── services/            # 特征聚合 → 风控引擎 → 授信计算
+    │   │   └── risk_engines/    # 可插拔的风控引擎（阶段 I 是规则 v0，阶段 II 加评分卡）
     │   ├── config.py            # 配置（可用 .env 覆盖）
     │   ├── models.py            # 数据表：用户 / 产品 / 申请单 / 决策
     │   ├── schemas.py           # 入参模型（字段名兼容多种写法）
     │   ├── serializers.py       # 出参组装（统一 camelCase、时间格式、脱敏）
     │   ├── seed.py              # 演示账号 + 产品种子数据
     │   └── main.py              # 入口：CORS、统一异常外壳、路由注册
+    ├── tests/test_smoke.py      # 冒烟测试：登录 → 申请 → 决策 → 多源明细 → 人工复核
     ├── API.md                   # ★ 前后端接口契约（前端照着写就行）
     ├── run.py                   # 本地启动（8080 端口）
     ├── requirements.txt

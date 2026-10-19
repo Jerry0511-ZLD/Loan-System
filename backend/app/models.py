@@ -91,6 +91,9 @@ class Application(Base):
     purpose: Mapped[str] = mapped_column(String(128), default="")   # 借款用途
     # 对前端的状态：PENDING / APPROVED / REJECTED
     status: Mapped[str] = mapped_column(String(16), default=ApplicationStatus.PENDING.value)
+    # 是否等待人工复核。转人工时置 True，人工处理完置 False。
+    # 单独存一列而不是每次去 decisions 表里查，是为了让管理端"待办列表"能直接在 SQL 层过滤和分页。
+    review_required: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     risk_level: Mapped[str] = mapped_column(String(8), default="")   # LOW / MEDIUM / HIGH
     risk_score: Mapped[float] = mapped_column(Float, default=0.0)    # 0~100，越高越危险
     created_at: Mapped[datetime] = mapped_column(default=_now)
@@ -98,7 +101,13 @@ class Application(Base):
 
 
 class Decision(Base):
-    """规则引擎给出的决策结果（留痕，一笔申请一条）。"""
+    """规则引擎给出的决策结果（留痕，一笔申请一条）。
+
+    一笔申请可能有多条决策记录：
+    - 自动决策：source="auto"，申请提交时由风控引擎产生；
+    - 人工复核：source="manual"，风控专员处理"转人工"时追加，原始自动决策保留不覆盖。
+    因此读取决策时必须按创建时间取最新一条，见 services/lookup.py。
+    """
 
     __tablename__ = "decisions"
 
@@ -108,5 +117,17 @@ class Decision(Base):
     approved_amount: Mapped[float] = mapped_column(Float, default=0.0)  # 批核额度(元)
     rate: Mapped[float] = mapped_column(Float, default=0.0)             # 批核年化利率(小数)
     reasons: Mapped[list] = mapped_column(JSON, default=list)           # 命中的规则原因
+
+    # ---- 决策可追溯性 ----
+    engine: Mapped[str] = mapped_column(String(32), default="rule_v0")   # 决策引擎标识
+    model_version: Mapped[str] = mapped_column(String(32), default="0.1")  # 引擎/模型版本
     feature_profile: Mapped[dict] = mapped_column(JSON, default=dict)   # 聚合后的特征(留痕)
+    raw_data: Mapped[dict] = mapped_column(JSON, default=dict)          # 三源原始数据快照(留痕)
+
+    # ---- 人工复核 ----
+    source: Mapped[str] = mapped_column(String(16), default="auto")     # auto | manual
+    reviewer_id: Mapped[str] = mapped_column(String(32), default="")    # 复核人用户ID
+    reviewed_at: Mapped[datetime | None] = mapped_column(default=None)  # 复核时间
+    comment: Mapped[str] = mapped_column(String(255), default="")       # 复核意见
+
     created_at: Mapped[datetime] = mapped_column(default=_now)

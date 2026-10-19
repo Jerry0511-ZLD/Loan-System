@@ -74,6 +74,11 @@ async def create_loan(
     await db.flush()  # 生成 application.id，供决策记录引用
 
     decision = await run_decision(application, db, product)
+
+    # 事务边界收口：申请单与决策记录一起提交。
+    # run_decision 内部只 flush 不 commit（见 services/decision.py），
+    # 由路由层统一决定「这一笔业务算不算完成」，避免 service 层悄悄提交。
+    await db.commit()
     return ok(loan_to_dict(application, decision, product), message="申请已提交，风控结果已出")
 
 

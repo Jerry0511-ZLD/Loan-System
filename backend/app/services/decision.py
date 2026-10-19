@@ -10,8 +10,7 @@ from app.datasources.credit import CreditBureauSource
 from app.datasources.housing import HousingFundSource
 from app.models import Application, ApplicationStatus, Decision, DecisionStatus, Product
 from app.services.feature import aggregate
-from app.services.risk import risk_result
-from app.services.rule_engine import evaluate
+from app.services.risk_engines import get_engine
 
 BASE_RATE = 0.12          # 兜底年化基础利率（没选产品时用）
 RISK_PREMIUM_RATE = 0.08  # 命中降额规则时，利率的加点（风险溢价）
@@ -46,8 +45,12 @@ async def run_decision(
     # 2. 特征聚合
     profile = aggregate(raw, application.monthly_income)
 
-    # 3. 规则求值
-    result = evaluate(profile)
+    # 3. 交给风控引擎决策。
+    #    这里不直接调用规则引擎，而是通过 get_engine() 取引擎实例：
+    #    阶段 I 拿到的是 RuleEngineV0（规则占位），阶段 II 换成评分卡时只要改配置项
+    #    risk_engine，本文件与所有路由都不用动。
+    engine = get_engine()
+    verdict = engine.decide(profile)
 
     # 4. 计算授信额度与利率
     base_amount = min(
@@ -55,9 +58,9 @@ async def run_decision(
     )
     base_rate = product.base_rate if product is not None else BASE_RATE
 
-    if result.status == DecisionStatus.APPROVED:
-        approved_amount = round(base_amount * (1 - result.reduce_ratio), 2)
-        if result.reduce_ratio > 0:
+    if verdict.status == DecisionStatus.APPROVED:
+        approved_amount = round(base_amount * (1 - verdict.reduce_ratio), 2)
+        if verdict.reduce_ratio > 0:
             rate = base_rate + RISK_PREMIUM_RATE
         else:
             rate = base_rate
@@ -66,24 +69,37 @@ async def run_decision(
         approved_amount = 0.0
         rate = 0.0
 
-    # 5. 风险分档（分数越高越危险，见 services/risk.py）
-    risk_score, risk_level = risk_result(profile, result.status)
-
-    # 6. 回写申请单状态 + 落库
-    application.status = APPLICATION_STATUS_OF[result.status]
-    application.risk_level = risk_level
-    application.risk_score = risk_score
+    # 5. 回写申请单状态。
+    #    review_required 单独存一列，而不是每次去 decisions 表里查「是否有 manual 结论」，
+    #    是为了让管理端的「待办列表」能直接在 SQL 层过滤 + 分页，
+    #    不用把全部数据捞到内存里再筛（数据量一大就会出问题）。
+    application.status = APPLICATION_STATUS_OF[verdict.status]
+    application.review_required = verdict.status == DecisionStatus.MANUAL
+    application.risk_level = verdict.risk_level
+    application.risk_score = verdict.risk_score
     application.decided_at = datetime.now()
 
+    # 6. 落决策记录。
+    #    除了结论本身，这里额外留三份痕迹，供管理端「风控明细」页与事后审计使用：
+    #    - feature_profile：聚合后的特征画像（决策时这个人是什么样）
+    #    - raw_data：三个数据源各自返回的原始数据（这个画像是由什么聚合出来的）
+    #    - engine + model_version：结论是哪套机制、哪个版本算出来的（便于新旧机制效果对比）
     decision = Decision(
         application_id=application.id,
-        status=result.status,
+        status=verdict.status,
         approved_amount=approved_amount,
         rate=rate,
-        reasons=result.reasons,
+        reasons=verdict.reasons,
+        engine=verdict.engine,
+        model_version=verdict.model_version,
         feature_profile=profile.model_dump(),
+        raw_data=raw,
+        source="auto",
     )
     db.add(decision)
-    await db.commit()
-    await db.refresh(decision)
+
+    # 只 flush 不 commit：事务边界统一交给路由层（见 api/loans.py、api/applications.py）。
+    # 好处是「写申请单 + 写决策记录」要么一起成功、要么一起回滚；
+    # 也不会出现 service 层偷偷提交、调用方以为后续还能改动数据的情况。
+    await db.flush()
     return decision

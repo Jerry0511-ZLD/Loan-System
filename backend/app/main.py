@@ -21,10 +21,34 @@ from app.database import init_db
 from app.seed import seed_all
 
 
+# 代码里自带的开发用密钥。公开可见，不能用于任何真实环境。
+DEFAULT_SECRET_KEY = "loan-mvp-dev-secret-key-please-change"
+
+
+def _check_secret_key() -> None:
+    """启动时检查签名密钥是不是还在用默认值。
+
+    为什么要在启动时提醒：默认密钥就写在仓库里，任何人拿它都能自己签出一个
+    admin 令牌（把 {"uid": ..., "role": "admin", "exp": ...} 用这个密钥 HMAC 一下即可）。
+    演示环境为了省事可以继续用，但必须让开发者在控制台看到这条醒目提示；
+    正式部署前请在 backend/.env 里设置：
+        SECRET_KEY=<随机串>
+    随机串生成方式：
+        python -c "import secrets; print(secrets.token_hex(32))"
+    """
+    if settings.secret_key == DEFAULT_SECRET_KEY:
+        print("=" * 78)
+        print("[安全提醒] 正在使用默认 SECRET_KEY，任何人都能伪造登录令牌。")
+        print("           请在 backend/.env 中设置 SECRET_KEY=<随机串>。")
+        print("           生成方式：python -c \"import secrets; print(secrets.token_hex(32))\"")
+        print("=" * 78)
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    await init_db()   # MVP：启动即建表
-    await seed_all()  # 演示数据（幂等，已存在就跳过）
+    _check_secret_key()  # 安全自检：密钥还是默认值就大声提醒
+    await init_db()      # MVP：启动即建表（并给老库补齐新增字段）
+    await seed_all()     # 演示数据（幂等，已存在就跳过）
     yield
 
 

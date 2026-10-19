@@ -101,3 +101,59 @@ class ApplicationCreateRequest(BaseModel):
     product_id: str | None = Field(
         default=None, validation_alias=AliasChoices("productId", "product_id", "product")
     )
+
+
+class ReviewRequest(BaseModel):
+    """人工复核请求：管理端处理「转人工」的申请单时使用。
+
+    对应需求规格说明书用例 UC-05（人工复核审批）。
+    设计要点：
+    - action 必填，只接受 approve / reject 两种语义，但允许前端传中文或 pass 之类的近义词，
+      统一在校验器里归一化，避免前端因为一个词不一致就 422；
+    - approvedAmount / rate 是「可选覆盖项」：专员认为系统给的额度不合适时可以手工调整；
+      不传则沿用系统原决策的数值；
+    - comment 是复核意见，会写进决策记录，供事后追责与复盘。
+    """
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    action: str = Field(
+        validation_alias=AliasChoices("action", "result", "decision", "reviewResult")
+    )
+    approved_amount: float | None = Field(
+        default=None,
+        gt=0,
+        validation_alias=AliasChoices("approvedAmount", "approved_amount", "amount"),
+    )
+    rate: float | None = Field(
+        default=None,
+        gt=0,
+        validation_alias=AliasChoices("rate", "interestRate", "interest_rate"),
+    )
+    comment: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("comment", "remark", "reviewComment", "reason"),
+    )
+
+    @field_validator("action", mode="before")
+    @classmethod
+    def _normalize_action(cls, value):
+        """把 approve / pass / 通过 这类不同写法统一成 approve 或 reject。
+
+        多一层归一化而不是直接拒绝，是为了降低前后端联调成本：
+        前端同学写 'pass'、'agree'、'通过' 都能被接受，后端内部只处理两个标准值。
+        """
+        if isinstance(value, str):
+            v = value.strip().lower()
+            if v in ("approve", "approved", "pass", "agree", "通过", "同意", "批准"):
+                return "approve"
+            if v in ("reject", "rejected", "refuse", "deny", "拒绝", "驳回"):
+                return "reject"
+        return value
+
+    @field_validator("action")
+    @classmethod
+    def _check_action(cls, value):
+        if value not in ("approve", "reject"):
+            raise ValueError("action 只能是 approve（通过）或 reject（拒绝）")
+        return value
