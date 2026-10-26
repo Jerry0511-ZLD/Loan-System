@@ -4,13 +4,16 @@ import asyncio
 from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
 
 from app.datasources.carrier import CarrierSource
 from app.datasources.credit import CreditBureauSource
 from app.datasources.housing import HousingFundSource
-from app.models import Application, ApplicationStatus, Decision, DecisionStatus, Product
+from app.models import Application, ApplicationStatus, Decision, DecisionStatus, Product, RiskRuleConfig
 from app.services.feature import aggregate
 from app.services.risk_engines import get_engine
+from app.services.repayment import generate_repayment_plan
 
 BASE_RATE = 0.12          # 兜底年化基础利率（没选产品时用）
 RISK_PREMIUM_RATE = 0.08  # 命中降额规则时，利率的加点（风险溢价）
@@ -45,12 +48,24 @@ async def run_decision(
     # 2. 特征聚合
     profile = aggregate(raw, application.monthly_income)
 
+    # 2.5 读取规则阈值配置：改库即改风控的关键一步。
+    #     引擎必须保持纯函数（base.py 的约定），所以配置由这里读好、当参数传进去。
+    rows = (await db.execute(select(RiskRuleConfig))).scalars().all()
+    rule_configs = {}
+    for row in rows:
+        rule_configs[row.rule_name] = {
+            "enabled": row.enabled,
+            "threshold": row.threshold,
+            "reduce_ratio": row.reduce_ratio,
+        }
+
+
     # 3. 交给风控引擎决策。
     #    这里不直接调用规则引擎，而是通过 get_engine() 取引擎实例：
     #    阶段 I 拿到的是 RuleEngineV0（规则占位），阶段 II 换成评分卡时只要改配置项
     #    risk_engine，本文件与所有路由都不用动。
     engine = get_engine()
-    verdict = engine.decide(profile)
+    verdict = engine.decide(profile, rule_configs)
 
     # 4. 计算授信额度与利率
     base_amount = min(
@@ -97,6 +112,11 @@ async def run_decision(
         source="auto",
     )
     db.add(decision)
+
+    # 7. 审批通过 → 生成还款计划（只 add 不 commit，随下方 flush 一起入库）
+    if verdict.status == DecisionStatus.APPROVED:
+        generate_repayment_plan(application, approved_amount, rate, db)
+
 
     # 只 flush 不 commit：事务边界统一交给路由层（见 api/loans.py、api/applications.py）。
     # 好处是「写申请单 + 写决策记录」要么一起成功、要么一起回滚；

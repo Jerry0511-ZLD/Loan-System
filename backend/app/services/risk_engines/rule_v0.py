@@ -32,9 +32,10 @@ class RuleEngineV0(RiskEngine):
     name = "rule_v0"
     version = "1.0"
 
-    def decide(self, profile: FeatureProfile) -> RiskVerdict:
+    def decide(self, profile: FeatureProfile, rule_configs: dict | None = None) -> RiskVerdict:
+
         # 第 1 步：跑规则集，得到结论、降额比例和命中原因
-        result = evaluate(profile)
+        result = evaluate(profile, rule_configs)
 
         # 第 2 步：按结论对齐后计算风险分与档位
         score, level = risk_result(profile, result.status)

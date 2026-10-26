@@ -59,7 +59,7 @@ class RiskEngine(ABC):
     version: str = "0"
 
     @abstractmethod
-    def decide(self, profile: FeatureProfile) -> RiskVerdict:
+    def decide(self, profile: FeatureProfile, rule_configs: dict | None = None) -> RiskVerdict:
         """输入特征画像，输出决策结论。
 
         实现方注意：本方法应保持「纯函数」语义——只根据传入的特征计算，

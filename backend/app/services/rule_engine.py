@@ -1,7 +1,8 @@
-"""规则引擎(MVP 版):基于特征画像跑规则集,替代 ML 模型。
+"""规则引擎：基于特征画像跑规则集。
 
-规则 = 函数: FeatureProfile -> RuleHit | None
-求值优先级:reject > manual > approved;reduce 仅在 approved 时生效。
+规则 = 函数（行为骨架）+ 配置表里的一行数字（参数）。
+函数按自己的 rule_name 从 configs 里取阈值；表里没有就用本文件默认值兜底。
+求值优先级：reject > manual > approved；reduce 仅在 approved 时生效。
 """
 
 from dataclasses import dataclass
@@ -18,40 +19,80 @@ class RuleHit:
     reduce_ratio: float = 0.0  # 仅 reduce 动作使用
 
 
-# ---- 规则集(可后续改成 DB 配置) ----
-def _rule_blacklist(f: FeatureProfile):
+# ---- 代码级默认值：配置表查不到某条规则时兜底，行为与"硬编码时代"完全一致 ----
+DEFAULTS = {
+    "overdue_6m": {"threshold": 2},
+    "dti": {"threshold": 0.7},
+    "multi_platform": {"threshold": 5},
+    "short_tenure": {"threshold": 3},
+    "fund_inactive": {"reduce_ratio": 0.2},
+}
+
+
+def _params(configs: dict, name: str) -> dict:
+    """取某条规则的参数：DB 配置覆盖代码默认值，最后保证 enabled 有值。"""
+    merged = dict(DEFAULTS.get(name, {}))
+    merged.update(configs.get(name) or {})
+    merged.setdefault("enabled", True)
+    return merged
+
+
+# ---- 规则集（行为留代码，数字进配置）----
+def _rule_blacklist(f: FeatureProfile, configs: dict):
+    if not _params(configs, "blacklist")["enabled"]:
+        return None
     if f.is_blacklisted:
         return RuleHit("blacklist", "reject", "命中征信黑名单")
     return None
 
 
-def _rule_overdue(f: FeatureProfile):
-    if f.overdue_count_6m >= 2:
-        return RuleHit("overdue_6m", "reject", f"近6月逾期{f.overdue_count_6m}次")
+def _rule_overdue(f: FeatureProfile, configs: dict):
+    cfg = _params(configs, "overdue_6m")
+    threshold = cfg.get("threshold")
+    if not cfg["enabled"] or threshold is None:
+        return None
+    if f.overdue_count_6m >= threshold:
+        return RuleHit("overdue_6m", "reject", f"近6月逾期{f.overdue_count_6m}次（阈值{threshold:g}）")
     return None
 
 
-def _rule_dti(f: FeatureProfile):
-    if f.dti > 0.7:
-        return RuleHit("dti", "reject", f"负债收入比{f.dti:.2f}超阈值0.7")
+def _rule_dti(f: FeatureProfile, configs: dict):
+    cfg = _params(configs, "dti")
+    threshold = cfg.get("threshold")
+    if not cfg["enabled"] or threshold is None:
+        return None
+    if f.dti > threshold:
+        return RuleHit("dti", "reject", f"负债收入比{f.dti:.2f}超阈值{threshold:g}")
     return None
 
 
-def _rule_multi_platform(f: FeatureProfile):
-    if f.credit_card_count >= 5:
-        return RuleHit("multi_platform", "manual", f"多头授信{f.credit_card_count}家,转人工")
+def _rule_multi_platform(f: FeatureProfile, configs: dict):
+    cfg = _params(configs, "multi_platform")
+    threshold = cfg.get("threshold")
+    if not cfg["enabled"] or threshold is None:
+        return None
+    if f.credit_card_count >= threshold:
+        return RuleHit("multi_platform", "manual", f"多头授信{f.credit_card_count}家（阈值{threshold:g}），转人工")
     return None
 
 
-def _rule_short_tenure(f: FeatureProfile):
-    if f.active_months < 3:
-        return RuleHit("short_tenure", "manual", f"在网{f.active_months}月<3,转人工")
+def _rule_short_tenure(f: FeatureProfile, configs: dict):
+    cfg = _params(configs, "short_tenure")
+    threshold = cfg.get("threshold")
+    if not cfg["enabled"] or threshold is None:
+        return None
+    if f.active_months < threshold:
+        return RuleHit("short_tenure", "manual", f"在网{f.active_months}月＜{threshold:g}，转人工")
     return None
 
 
-def _rule_fund_inactive(f: FeatureProfile):
+def _rule_fund_inactive(f: FeatureProfile, configs: dict):
+    cfg = _params(configs, "fund_inactive")
+    if not cfg["enabled"]:
+        return None
     if not f.fund_active:
-        return RuleHit("fund_inactive", "reduce", "公积金未正常缴纳,降额20%", reduce_ratio=0.2)
+        ratio = cfg.get("reduce_ratio") or 0.2
+        return RuleHit("fund_inactive", "reduce", f"公积金未正常缴纳，降额{ratio:.0%}", reduce_ratio=ratio)
     return None
 
 
@@ -72,16 +113,32 @@ class RuleResult:
     reasons: list         # 触发原因列表
 
 
-def evaluate(f: FeatureProfile) -> RuleResult:
-    hits = [h for r in RULES if (h := r(f)) is not None]
+def evaluate(f: FeatureProfile, configs: dict | None = None) -> RuleResult:
+    configs = configs or {}
+    hits = []
+    for rule_fn in RULES:
+        hit = rule_fn(f, configs)
+        if hit is not None:
+            hits.append(hit)
 
-    if any(h.action == "reject" for h in hits):
-        status = DecisionStatus.REJECTED
-    elif any(h.action == "manual" for h in hits):
-        status = DecisionStatus.MANUAL
-    else:
-        status = DecisionStatus.APPROVED
+    status = DecisionStatus.APPROVED
+    for h in hits:
+        if h.action == "reject":
+            status = DecisionStatus.REJECTED
+            break
+    if status == DecisionStatus.APPROVED:
+        for h in hits:
+            if h.action == "manual":
+                status = DecisionStatus.MANUAL
+                break
 
-    reduce_ratio = min(sum(h.reduce_ratio for h in hits if h.action == "reduce"), 0.9)
-    reasons = [f"{h.rule}: {h.reason}" for h in hits]
+    total_reduce = 0.0
+    for h in hits:
+        if h.action == "reduce":
+            total_reduce = total_reduce + h.reduce_ratio
+    reduce_ratio = min(total_reduce, 0.9)
+
+    reasons = []
+    for h in hits:
+        reasons.append(f"{h.rule}: {h.reason}")
     return RuleResult(status=status, reduce_ratio=reduce_ratio, reasons=reasons)

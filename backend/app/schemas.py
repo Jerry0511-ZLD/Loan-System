@@ -6,6 +6,23 @@
 """
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator
+from typing import Literal
+
+
+class RegisterRequest(BaseModel):
+    """注册：账号可以是用户名，也可以是手机号。"""
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    username: str | None = Field(
+        default=None, validation_alias=AliasChoices("username", "account")
+    )
+    password: str | None = Field(
+        default=None, validation_alias=AliasChoices("password", "passwd", "pwd")
+    )
+    name: str | None = Field(
+        default=None, validation_alias=AliasChoices("name", "n")
+    )
 
 
 class LoginRequest(BaseModel):
@@ -19,6 +36,11 @@ class LoginRequest(BaseModel):
     password: str | None = Field(
         default=None, validation_alias=AliasChoices("password", "passwd", "pwd")
     )
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
 
 
 class LoanCreateRequest(BaseModel):
@@ -157,3 +179,37 @@ class ReviewRequest(BaseModel):
         if value not in ("approve", "reject"):
             raise ValueError("action 只能是 approve（通过）或 reject（拒绝）")
         return value
+
+
+class ProductCreateRequest(BaseModel):
+    """管理端上架新产品。"""
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    name: str = Field(min_length=1)
+    description: str = ""
+    min_amount: float = Field(gt=0, validation_alias=AliasChoices("minAmount", "min_amount"))
+    max_amount: float = Field(gt=0, validation_alias=AliasChoices("maxAmount", "max_amount"))
+    min_term: int = Field(default=3, ge=1, validation_alias=AliasChoices("minTerm", "min_term"))
+    max_term: int = Field(default=36, ge=1, validation_alias=AliasChoices("maxTerm", "max_term"))
+    base_rate: float = Field(gt=0, lt=1, validation_alias=AliasChoices("baseRate", "base_rate"))
+    tags: list[str] = Field(default=[], validation_alias=AliasChoices("tags"))
+    featured: bool = False
+    sort_order: int = 0
+
+
+class ProductUpdateRequest(BaseModel):
+    """管理端修改产品：改哪项传哪项，不传的项不动。"""
+
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    name: str | None = None
+    description: str | None = None
+    min_amount: float | None = Field(default=None, gt=0, validation_alias=AliasChoices("minAmount", "min_amount"))
+    max_amount: float | None = Field(default=None, gt=0, validation_alias=AliasChoices("maxAmount", "max_amount"))
+    min_term: int | None = Field(default=None, ge=1, validation_alias=AliasChoices("minTerm", "min_term"))
+    max_term: int | None = Field(default=None, ge=1, validation_alias=AliasChoices("maxTerm", "max_term"))
+    base_rate: float | None = Field(default=None, gt=0, lt=1, validation_alias=AliasChoices("baseRate", "base_rate"))
+    tags: list[str] | None = None
+    featured: bool | None = None
+    sort_order: int | None = None
+    status: Literal["on", "off"] | None = None

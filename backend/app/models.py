@@ -59,7 +59,7 @@ class Product(Base):
 
     __tablename__ = "products"
 
-    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
     name: Mapped[str] = mapped_column(String(64))
     description: Mapped[str] = mapped_column(String(255), default="")
     min_amount: Mapped[float] = mapped_column(Float, default=0.0)   # 起贷金额(元)
@@ -131,3 +131,33 @@ class Decision(Base):
     comment: Mapped[str] = mapped_column(String(255), default="")       # 复核意见
 
     created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
+class RepaymentPlan(Base):
+    __tablename__ = "repayment_plan"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    application_id: Mapped[str] = mapped_column(String(32), index=True)
+    period_no: Mapped[str] = mapped_column(String(32), index=True)
+    due_date: Mapped[datetime | None] = mapped_column(default=None)
+    monthly_payment: Mapped[float] = mapped_column(Float)
+    interest: Mapped[float] = mapped_column(Float)
+    principal: Mapped[float] = mapped_column(Float)
+    remaining_principal: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+
+
+class RiskRuleConfig(Base):
+    """风控规则阈值配置。每个规则函数按 rule_name 来这里取自己的数字。
+
+    只放"参数"不放"行为"：动作类型和比较逻辑留在代码里。
+    """
+
+    __tablename__ = "risk_rule_configs"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
+    rule_name: Mapped[str] = mapped_column(String(32), unique=True)   # 规则名，代码按它找参数
+    threshold: Mapped[float | None] = mapped_column(default=None)     # 数值阈值
+    reduce_ratio: Mapped[float | None] = mapped_column(default=None)  # 降额比例（仅 reduce 型规则用）
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)      # 开关：False = 规则停用
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)

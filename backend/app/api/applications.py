@@ -21,6 +21,8 @@ from app.schemas import ApplicationCreateRequest, ReviewRequest
 from app.serializers import decision_to_dict, fmt_time, loan_to_dict
 from app.services.decision import BASE_RATE, INCOME_MULTIPLE, run_decision
 from app.services.lookup import load_decisions, load_products
+from app.services.repayment import generate_repayment_plan
+
 
 router = APIRouter(tags=["申请管理（管理端）"])
 
@@ -300,6 +302,10 @@ async def review_application(
     application.decided_at = now
     # 风险档位跟着人工结论走，避免出现「APPROVED 但 riskLevel=HIGH」的自相矛盾
     application.risk_level = "LOW" if decision_status == DecisionStatus.APPROVED else "HIGH"
+
+    # 人工批准 → 生成还款计划（额度/利率用本函数前面最终确定的值）
+    if decision_status == DecisionStatus.APPROVED:
+        generate_repayment_plan(application, approved_amount, rate, db)
 
     await db.commit()
     await db.refresh(decision)

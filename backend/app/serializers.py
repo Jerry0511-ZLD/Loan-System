@@ -5,7 +5,7 @@
 
 from datetime import datetime
 
-from app.models import Application, Decision, Product, User
+from app.models import Application, Decision, Product, User, RepaymentPlan
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"  # 时间统一返回这个格式的字符串，前端可直接显示
 
@@ -62,6 +62,8 @@ def product_to_dict(product: Product) -> dict:
         "rateText": f"{product.base_rate * 100:g}% 起",  # 直接展示用
         "tags": product.tags or [],
         "featured": product.featured,
+        "status": product.status,
+        "sortOrder": product.sort_order,
     }
 
 
@@ -125,4 +127,18 @@ def loan_to_dict(
         "reasons": (decision.reasons or []) if decision is not None else [],
         "createdAt": fmt_time(application.created_at),
         "decidedAt": fmt_time(application.decided_at),
+    }
+
+
+def RepaymentPlan_to_dict(plan: RepaymentPlan) -> dict:
+    return {
+        "id": plan.id,
+        "application_id": plan.application_id,
+        "period_no": plan.period_no,
+        "due_date": plan.due_date,
+        "monthly_payment": plan.monthly_payment,
+        "interest": plan.interest,
+        "principal": plan.principal,
+        "remaining_principal": plan.remaining_principal,
+        "created_at": plan.created_at,
     }

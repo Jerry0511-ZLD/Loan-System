@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user
 from app.core.response import ok, page_data
 from app.database import get_db
-from app.models import Application, Product, User
+from app.models import Application, Product, User, RepaymentPlan
 from app.schemas import LoanCreateRequest
-from app.serializers import loan_to_dict
+from app.serializers import loan_to_dict, fmt_time, RepaymentPlan_to_dict
 from app.services.decision import run_decision
 from app.services.lookup import load_decisions, load_products
 
@@ -139,3 +139,23 @@ async def get_loan(
     decisions = await load_decisions(db, [application.id])
     products = await load_products(db, [application.product_id])
     return ok(loan_to_dict(application, decisions.get(application.id), products.get(application.product_id)))
+
+
+@router.get("/loans/RepaymentPlan", summary="还款计划")
+async def get_loan_repayment_plan(
+        loan_id: str,
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+):
+    application = await db.get(Application, loan_id)
+    if application is None:
+        raise HTTPException(status_code=404, detail="访问记录不存在")
+    if application.user_id != user.id and user.role != "admin":
+        raise HTTPException(status_code=403, detail="无权查看这笔申请")
+
+    stmt = select(RepaymentPlan).where(RepaymentPlan.application_id == loan_id).order_by(RepaymentPlan.period_no)
+    rows = await db.execute(stmt).scalars().all()
+    items = []
+    for row in rows:
+        items.append(RepaymentPlan_to_dict(row))
+    return ok(items)

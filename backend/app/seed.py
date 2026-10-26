@@ -10,7 +10,8 @@ from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.database import SessionLocal
-from app.models import Product, User
+from app.models import Product, User, RiskRuleConfig
+
 
 DEMO_USERS = [
     {
@@ -74,6 +75,16 @@ DEMO_PRODUCTS = [
 ]
 
 
+DEFAULT_RULE_CONFIGS = [
+    {"rule_name": "blacklist"},
+    {"rule_name": "overdue_6m", "threshold": 2},
+    {"rule_name": "dti", "threshold": 0.7},
+    {"rule_name": "multi_platform", "threshold": 5},
+    {"rule_name": "short_tenure", "threshold": 3},
+    {"rule_name": "fund_inactive", "reduce_ratio": 0.2},
+]
+
+
 async def seed_all() -> None:
     async with SessionLocal() as db:
         # 1. 账号
@@ -98,5 +109,15 @@ async def seed_all() -> None:
         for item in DEMO_PRODUCTS:
             if await db.get(Product, item["id"]) is None:
                 db.add(Product(**item))
+
+        # 3. 规则阈值配置（幂等：已有同名规则就跳过，不覆盖管理员改过的值）
+        existing_rules = set(
+            (await db.execute(select(RiskRuleConfig.rule_name))).scalars().all()
+        )
+        for item in DEFAULT_RULE_CONFIGS:
+            if item["rule_name"] in existing_rules:
+                continue
+            db.add(RiskRuleConfig(**item))
+
 
         await db.commit()
